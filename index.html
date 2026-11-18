@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Адвент-календарь · Красный Крест</title>
+<style>
+  :root { --red:#c8102e; --cream:#fff6e5; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; }
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    color:#3b2a1d;
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    background:
+      linear-gradient(to bottom, transparent 0, transparent 82%, #8a5a34 82%, #6b4223 100%),
+      repeating-linear-gradient(90deg, #f3dfb8 0 38px, #efd8ae 38px 40px),
+      #f3dfb8;
+    background-attachment: fixed;
+    overflow-x:hidden;
+  }
+  body::before {
+    content:""; position:fixed; inset:0 0 18% 0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(circle at 20px 20px, rgba(200,16,46,.08) 3px, transparent 4px) 0 0/40px 40px,
+      radial-gradient(circle at 0 0, rgba(0,0,0,.04), transparent 60%);
+  }
+  body::after {
+    content:""; position:fixed; left:0; right:0; bottom:0; height:18%; z-index:0; pointer-events:none;
+    background:
+      linear-gradient(#4a2c15 0 6px, transparent 6px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 2px, transparent 2px 120px),
+      linear-gradient(#8a5a34, #5e3a1e);
+  }
+  canvas#snow { position:fixed; inset:0; z-index:5; pointer-events:none; }
+
+  header { position:relative; z-index:2; text-align:center; padding:18px 12px 0; }
+  h1 { margin:0; font-size:clamp(22px,4vw,38px); color:var(--red); letter-spacing:.5px; }
+  .sub { margin:4px 0 0; font-size:clamp(13px,2vw,17px); opacity:.8; }
+  .stats { margin-top:8px; font-size:14px; }
+  .stats b { color:var(--red); }
+
+  .window { position:fixed; top:90px; left:4%; width:130px; height:170px; z-index:1;
+    background:linear-gradient(#1d2f52,#3b5a8c); border:8px solid #fff; border-radius:6px;
+    box-shadow:0 0 0 3px #d9c7a0, inset 0 0 20px rgba(255,255,255,.2); }
+  .window::before,.window::after { content:""; position:absolute; background:#fff; }
+  .window::before { left:50%; top:0; bottom:0; width:6px; transform:translateX(-50%); }
+  .window::after { top:50%; left:0; right:0; height:6px; transform:translateY(-50%); }
+  .rug { position:fixed; bottom:2%; left:50%; width:min(760px,90vw); height:60px; transform:translateX(-50%);
+    background:radial-gradient(ellipse at center, #a3342f 0 55%, #7d1f1c 56% 100%); border-radius:50%; z-index:1; opacity:.9; }
+  @media (max-width:900px){ .window{display:none;} }
+
+  main { position:relative; z-index:3; width:min(640px,100%); flex:1; padding:0 8px 40px; }
+  svg#tree { width:100%; height:auto; display:block; filter:drop-shadow(0 8px 10px rgba(0,0,0,.35)); }
+
+  .ball { cursor:pointer; transition:transform .15s; transform-box:fill-box; transform-origin:center; }
+  .ball:hover { transform:scale(1.15); }
+  .ball.locked { cursor:not-allowed; opacity:.45; filter:grayscale(.7); }
+  .ball.locked:hover { transform:none; }
+  .ball.today circle.glow { animation:pulse 1.4s ease-in-out infinite; }
+  .ball .num { font:bold 15px Georgia,serif; fill:#fff; text-anchor:middle; dominant-baseline:central; pointer-events:none; paint-order:stroke; stroke:rgba(0,0,0,.35); stroke-width:2px; }
+  .ball.opened .num { opacity:0; }
+  .ball .check { display:none; font:bold 18px sans-serif; fill:#fff; text-anchor:middle; dominant-baseline:central; pointer-events:none; }
+  .ball.opened .check { display:block; }
+  .ball.opened circle.body { filter:brightness(.8); }
+  @keyframes pulse { 0%,100%{ opacity:.15; r:22; } 50%{ opacity:.7; r:28; } }
+  .bulb { animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+  .star { animation:blink 3s infinite; }
+
+  .overlay { position:fixed; inset:0; background:rgba(30,15,5,.6); display:none; align-items:center; justify-content:center; z-index:20; padding:14px; }
+  .overlay.show { display:flex; }
+  .card { background:var(--cream); width:min(520px,100%); max-height:92vh; overflow:auto; border-radius:16px; padding:26px 26px 20px;
+    border:4px solid var(--red); box-shadow:0 20px 50px rgba(0,0,0,.5); position:relative; animation:pop .25s ease-out; }
+  @keyframes pop { from{ transform:scale(.8); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  .card .day { display:inline-block; background:var(--red); color:#fff; border-radius:20px; padding:2px 14px; font-weight:bold; font-size:14px; }
+  .card h2 { margin:10px 0 8px; font-size:22px; color:var(--red); }
+  .card p { line-height:1.5; margin:8px 0; font-size:16px; }
+  .quiz { margin-top:14px; padding:12px 14px; background:#fff; border:2px solid #cfe3d4; border-radius:10px; }
+  .quiz .q { margin:0 0 8px; font-size:15px; }
+  .quiz .opts { display:flex; flex-direction:column; gap:6px; }
+  .quiz .opt { text-align:left; background:#f1ead8; color:#3b2a1d; border:2px solid transparent; }
+  .quiz .opt:hover:not(:disabled) { border-color:var(--red); }
+  .quiz .opt.right { background:#2e9e5b; color:#fff; opacity:1; }
+  .quiz .opt.wrong { background:#c8102e; color:#fff; opacity:1; }
+  .quiz .opt:disabled { cursor:default; opacity:.75; }
+  .quiz .res { margin:8px 0 0; font-size:14px; min-height:1em; }
+  .task { margin-top:14px; padding:12px 14px; background:#fff; border:2px dashed #d99; border-radius:10px; }
+  .task b { color:var(--red); }
+  .task label { display:flex; gap:8px; align-items:center; margin-top:8px; cursor:pointer; font-size:15px; }
+  .nav { display:flex; justify-content:space-between; margin-top:16px; gap:8px; }
+  button { font:inherit; background:var(--red); color:#fff; border:0; border-radius:8px; padding:8px 14px; cursor:pointer; }
+  button.ghost { background:#e8d7b5; color:#3b2a1d; }
+  button:disabled { opacity:.35; cursor:default; }
+  .close { position:absolute; top:8px; right:12px; background:none; color:#3b2a1d; font-size:26px; padding:0 6px; }
+  #music { position:fixed; top:10px; right:10px; z-index:25; background:rgba(255,246,229,.95); color:#3b2a1d; border:2px solid var(--red); }
+  footer { position:relative; z-index:3; font-size:12px; opacity:.7; padding:0 12px 10px; text-align:center; color:#fff; }
+  #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#3b2a1d; color:#fff; padding:10px 18px; border-radius:20px; z-index:30; display:none; font-size:14px; }
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<button id="music" type="button" aria-pressed="false">Музыка: выкл</button>
+<div class="window"></div>
+<div class="rug"></div>
+
+<header>
+  <h1>Новогодний адвент-календарь</h1>
+  <p class="sub">31 шар — 31 факт о Красном Кресте, мини-квиз и одно доброе дело</p>
+  <div class="stats">Открыто: <b id="sOpen">0</b> из 31 · Верных ответов: <b id="sQuiz">0</b> · Добрых дел: <b id="sDone">0</b></div>
+</header>
+
+<main>
+  <svg id="tree" viewBox="0 0 600 760" aria-label="Ёлка с шарами"></svg>
+</main>
+
+<footer>Страница сделана коллегами для коллег и не является официальным ресурсом организации.</footer>
+
+<div class="overlay" id="overlay">
+  <div class="card" role="dialog" aria-modal="true">
+    <button class="close" id="close" aria-label="Закрыть">×</button>
+    <span class="day" id="cDay"></span>
+    <h2 id="cTitle"></h2>
+    <p id="cFact"></p>
+    <div class="quiz">
+      <p class="q" id="qText"></p>
+      <div class="opts" id="qOpts"></div>
+      <p class="res" id="qRes"></p>
+    </div>
+    <div class="task">
+      <b>Доброе дело дня:</b> <span id="cTask"></span>
+      <label><input type="checkbox" id="cDone"> Сделано!</label>
+    </div>
+    <div class="nav">
+      <button class="ghost" id="prev">← Предыдущий</button>
+      <button class="ghost" id="next">Следующий →</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const YEAR = 2026;
+const DAYS = [
+ ["Поле битвы под Сольферино","24 июня 1859 года швейцарский предприниматель Анри Дюнан оказался рядом с местом кровопролитного сражения и увидел тысячи раненых без помощи. Он организовал местных жителей, и они ухаживали за всеми без различия сторон. Фраза женщин «Tutti fratelli» — «Все мы братья» — стала символом будущего движения.","Скажите коллеге «спасибо» за что-то конкретное."],
+ ["Книга, которая всё изменила","В 1862 году Дюнан издал «Воспоминание о битве при Сольферино». Он предложил две идеи: создать в каждой стране добровольные общества помощи раненым и принять международное соглашение, защищающее их.","Напишите добрую рабочую записку и оставьте её на столе коллеги."],
+ ["Комитет пяти","В феврале 1863 года в Женеве собрался комитет из пяти человек: Дюнан, Гюстав Муанье, Гийом-Анри Дюфур, Луи Аппиа и Теодор Моноир. Позже он стал Международным комитетом Красного Креста (МККК).","Познакомьтесь с коллегой из другого отдела: узнайте, чем он занимается."],
+ ["Первая Женевская конвенция","В 1864 году 12 государств подписали первую Женевскую конвенцию. Раненые и медицинский персонал на войне получили защиту, а их помощь перестала считаться вражеским действием.","Уберите со своего стола всё лишнее и освободите место для порядка."],
+ ["Почему именно красный крест","Эмблема — это цвета швейцарского флага наоборот: красный крест на белом фоне. Так Женева отдала дань уважения Швейцарии. Она не имеет религиозного значения.","Нарисуйте на стикере красный крестик и приклейте его на аптечку в офисе."],
+ ["Красный Полумесяц","Во время русско-турецкой войны 1876–1878 годов Османская империя заявила, что будет использовать красный полумесяц вместо креста. Эмблему официально признали Женевской конвенцией 1929 года.","Узнайте, где в вашем офисе лежит аптечка, и посмотрите, не пора ли её пополнить."],
+ ["Красный Кристалл","В 2005 году появилась третья эмблема — Красный Кристалл. Это красный ромб на белом фоне, нейтральный символ без национальных и религиозных значений.","Сделайте комплимент идеям коллеги на ближайшей встрече."],
+ ["Российское общество в 1867 году","В 1867 году император Александр II утвердил устав «Общества попечения о раненых и больных воинах». С 1879 года оно называлось Российским обществом Красного Креста (РОКК).","Отправьте открытку или тёплое сообщение коллеге, который давно работает в компании."],
+ ["Сёстры милосердия в Крымской войне","Ещё до основания РОКК, в 1854 году, великая княгиня Елена Павловна создала Крестовоздвиженскую общину сестёр милосердия. Её сёстры работали в госпиталях осаждённого Севастополя.","Принесите в офис что-нибудь к чаю для всех."],
+ ["Николай Пирогов","Хирург Николай Пирогов работал в Крымской войне вместе с сёстрами милосердия. Он ввёл сортировку раненых — принцип, который сегодня лежит в основе медицины катастроф.","Помогите коллеге разобраться с задачей, которую вы хорошо знаете."],
+ ["Франко-прусская война","Российское общество Красного Креста участвовало в помощи раненым и во франко-прусской войне 1870–1871 годов, то есть вскоре после своего основания.","Помиритесь с кем-то, с кем давно была неловкая ситуация."],
+ ["Русско-турецкая война 1877–1878","В эту войну общество развернуло лазареты, санитарные отряды и склады. Это был первый крупный опыт РОКК, который показал, что общество способно работать масштабно.","Составьте список трёх вещей, которые у вас получились в этом году."],
+ ["Русско-японская война","В 1904–1905 годах РОКК вновь участвовал в помощи раненым и больным воинам: общество работало в госпиталях и на санитарных поездах вдали от европейской части страны.","Выйдите на 10-минутную прогулку и подышите воздухом."],
+ ["Агентство для военнопленных","В 1914 году МККК открыл в Женеве Международное агентство по делам военнопленных. Через него прошли миллионы карточек, и семьи узнавали о судьбе своих близких.","Позвоните родственнику, с которым давно не говорили."],
+ ["Первый лауреат премии мира","В 1901 году Анри Дюнан разделил с Фредериком Пасси самую первую Нобелевскую премию мира.","Поблагодарите наставника или первого руководителя."],
+ ["Три Нобелевские премии","МККК получал Нобелевскую премию мира трижды: в 1917, 1944 и 1963 годах. Последний раз — совместно с Лигой обществ Красного Креста.","Придумайте и отметьте тремя словами сильные стороны вашей команды."],
+ ["Последние годы Дюнана","Дюнан разорился и годами жил в бедности в швейцарском городке Гейден. Журналист Георг Баумбергер написал о нём в 1895 году, и мир вспомнил основателя Красного Креста. Он умер в 1910 году.","Поддержите сегодня того, кому тяжело, хотя бы добрым словом."],
+ ["Всемирный день Красного Креста","8 мая — Всемирный день Красного Креста и Красного Полумесяца. Дата выбрана в честь дня рождения Дюнана: он родился 8 мая 1828 года.","Отметьте 8 мая в календаре на следующий год и поделитесь датой с командой."],
+ ["Семь принципов","Гуманность, беспристрастность, нейтральность, независимость, добровольность, единство и универсальность — семь основополагающих принципов Движения, принятых в 1965 году.","Выберите один из принципов и применяйте его сегодня на работе."],
+ ["Конвенции 1949 года","После Второй мировой войны были приняты четыре Женевские конвенции. Сегодня их ратифицировали все государства мира. Они защищают раненых, больных, пленных и гражданских.","Расскажите коллеге о том, что вы сегодня узнали."],
+ ["Почти 190 национальных обществ","В Международное движение входят МККК, Международная федерация обществ Красного Креста и Красного Полумесяца и почти 190 национальных обществ, включая Российский Красный Крест.","Пригласите коллегу из соседнего отдела на кофе."],
+ ["Номера, которые нужно знать","В России единый номер экстренных служб — 112, скорая помощь — 103. Первая помощь начинается с вызова специалистов и обеспечения безопасности на месте происшествия.","Сохраните 112 в контактах телефона и расскажите об этом близким."],
+ ["Российский Красный Крест сегодня","Современный Российский Красный Крест обучает первой помощи, помогает пожилым людям, мигрантам и пострадавшим в чрезвычайных ситуациях. Он работает через региональные отделения по всей стране.","Подумайте, кому из знакомых нужна помощь, и предложите её."],
+ ["Донорство крови","14 июня отмечается Всемирный день донора крови. Дата выбрана в день рождения Карла Ландштейнера, открывшего группы крови. Красный Крест — один из организаторов этого дня.","Узнайте, где в вашем городе принимают доноров."],
+ ["Весточки от близких","Служба восстановления семейных связей Красного Креста помогает людям, разлучённым войнами, катастрофами и миграцией, находить родных и передавать им сообщения.","Напишите письмо от руки близкому человеку."],
+ ["Медаль Флоренс Найтингейл","С 1912 года МККК раз в два года награждает медицинских сестёр и братьев милосердия медалью Флоренс Найтингейл — высшей международной наградой для сестёр милосердия.","Поблагодарите медицинского работника, которого знаете."],
+ ["Красный Крест в годы войны","В 1941–1945 годах Красный Крест СССР массово обучал санитарок и сестёр, а его дружинницы выносили раненых с поля боя и работали в госпиталях.","Расскажите молодому коллеге о близком человеке из вашей семьи, прошедшем войну."],
+ ["Международная федерация","В 1919 году в Париже создали Лигу обществ Красного Креста, позже ставшую Международной федерацией. Она объединила национальные общества для помощи при бедствиях в мирное время.","Предложите чем-то помочь волонтёрской инициативе."],
+ ["Ритм спасения","Если нужна сердечно-лёгочная реанимация, компрессии грудной клетки выполняют в темпе 100–120 в минуту. Это примерно темп песни Stayin' Alive группы Bee Gees.","Пройдите бесплатный онлайн-курс по первой помощи."],
+ ["Музей в Женеве","В Женеве с 1988 года работает Международный музей Красного Креста и Красного Полумесяца, где рассказывается об истории гуманитарной помощи.","Запланируйте на каникулах поход в музей — любой, который вам интересен."],
+ ["Среди войны — милосердие","Девиз МККК — Inter arma caritas, «Среди войны — милосердие». Спасибо, что дошли до конца календаря. С Новым годом!","Загадайте желание и подарите кому-нибудь тёплое пожелание на 2027 год."]
+];
+
+// [вопрос, верный ответ, неверный, неверный]
+const QUIZ = [
+ ["Что означает фраза «Tutti fratelli», ставшая символом движения?","Все мы братья","Помоги ближнему","Мир всем"],
+ ["В каком году Дюнан издал «Воспоминание о битве при Сольферино»?","1862","1859","1864"],
+ ["Из скольких человек состоял комитет, собравшийся в Женеве в 1863 году?","Из пяти","Из трёх","Из двенадцати"],
+ ["Сколько государств подписали первую Женевскую конвенцию в 1864 году?","12","5","50"],
+ ["Эмблему Красного Креста получили, поменяв цвета флага какой страны?","Швейцарии","Англии","Франции"],
+ ["Какая империя заявила об использовании красного полумесяца вместо креста?","Османская","Австро-Венгерская","Персидская"],
+ ["В каком году появилась эмблема «Красный Кристалл»?","2005","1995","2015"],
+ ["В каком году император Александр II утвердил устав общества попечения о раненых и больных воинах?","1867","1812","1904"],
+ ["В госпиталях какого осаждённого города работали сёстры Крестовоздвиженской общины?","Севастополя","Москвы","Казани"],
+ ["Какой принцип ввёл в Крымскую войну Николай Пирогов?","Сортировку раненых","Женевскую конвенцию","Эмблему полумесяца"],
+ ["В какие годы шла франко-прусская война, в которой участвовал РОКК?","1870–1871","1812–1814","1914–1918"],
+ ["Что развернуло общество в русско-турецкую войну 1877–1878 годов?","Лазареты, санитарные отряды и склады","Метеостанции","Типографии"],
+ ["В какие годы шла русско-японская война?","1904–1905","1877–1878","1914–1918"],
+ ["В каком городе в 1914 году открыли Международное агентство по делам военнопленных?","В Женеве","В Париже","В Москве"],
+ ["Какую премию получил Дюнан в 1901 году?","Нобелевскую премию мира","Нобелевскую премию по медицине","Орден Почётного легиона"],
+ ["Сколько раз МККК получал Нобелевскую премию мира (в 1917, 1944 и 1963 годах)?","Три раза","Один раз","Пять раз"],
+ ["В каком году умер Анри Дюнан?","1910","1895","1901"],
+ ["Почему Всемирный день Красного Креста отмечают 8 мая?","В этот день родился Дюнан","В этот день подписали конвенцию","В этот день началось сражение при Сольферино"],
+ ["Что из перечисленного не относится к семи принципам Движения?","Конкуренция","Гуманность","Беспристрастность"],
+ ["Сколько Женевских конвенций приняли в 1949 году?","Четыре","Две","Двенадцать"],
+ ["Сколько примерно национальных обществ входит в Движение?","Почти 190","Около 50","Около 500"],
+ ["Какой номер скорой помощи в России?","103","101","102"],
+ ["Чему, среди прочего, обучает современный Российский Красный Крест?","Первой помощи","Управлению самолётом","Дрессировке животных"],
+ ["Чей день рождения выбран датой Всемирного дня донора крови (14 июня)?","Карла Ландштейнера","Николая Пирогова","Анри Дюнана"],
+ ["Какая служба помогает разлучённым людям находить родных?","Служба восстановления семейных связей","Служба доставки","Служба погоды"],
+ ["С какого года МККК присуждает медаль Флоренс Найтингейл?","С 1912","С 1863","С 1949"],
+ ["Что делали дружинницы Красного Креста СССР в годы войны?","Выносили раненых и работали в госпиталях","Строили мосты","Издавали газеты"],
+ ["В каком городе в 1919 году создали Лигу обществ Красного Креста?","В Париже","В Женеве","В Лондоне"],
+ ["В каком темпе выполняют компрессии грудной клетки при реанимации?","100–120 в минуту","40–60 в минуту","180–200 в минуту"],
+ ["С какого года в Женеве работает Международный музей Красного Креста и Красного Полумесяца?","С 1988","С 1863","С 2005"],
+ ["Как переводится девиз МККК Inter arma caritas?","Среди войны — милосердие","Мир всем людям","Помощь без границ"]
+];
+
+const KEY = "recross_advent_" + YEAR;
+let state = JSON.parse(localStorage.getItem(KEY) || '{"opened":[],"done":[],"quiz":{}}');
+state.quiz = state.quiz || {};
+const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+
+function currentDay() {
+  const p = new URLSearchParams(location.search);
+  if (p.get("test") === "all") return 31;
+  if (p.get("day")) return Math.max(0, Math.min(31, +p.get("day") || 0));
+  const now = new Date();
+  if (now.getFullYear() > YEAR) return 31;
+  if (now.getFullYear() < YEAR || now.getMonth() < 11) return 0;
+  return Math.min(31, now.getDate());
+}
+const TODAY = currentDay();
+
+const NS = "http://www.w3.org/2000/svg";
+const el = (n, a = {}, parent) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; };
+const svg = document.getElementById("tree");
+
+const defs = el("defs", {}, svg);
+const COLORS = [["#e5384f","#8b0f22"],["#f5f5f5","#b9b9b9"],["#2e9e5b","#145a30"],["#f0b93a","#a37113"]];
+COLORS.forEach((c, i) => {
+  const g = el("radialGradient", { id: "g" + i, cx: ".35", cy: ".3", r: ".8" }, defs);
+  el("stop", { offset: "0", "stop-color": c[0] }, g);
+  el("stop", { offset: "1", "stop-color": c[1] }, g);
+});
+
+el("rect", { x: 280, y: 690, width: 40, height: 50, fill: "#6b4223" }, svg);
+el("polygon", { points: "300,40 50,700 550,700", fill: "#1a6b3a" }, svg);
+el("polygon", { points: "300,40 120,400 480,400", fill: "#208048", opacity: .55 }, svg);
+el("polygon", { class: "star", fill: "#ffd54a", stroke: "#e0a800", "stroke-width": 2,
+  points: "300,5 308,26 330,26 312,39 319,60 300,47 281,60 288,39 270,26 292,26" }, svg);
+
+const ROWS = [[3,190],[4,280],[5,370],[6,460],[6,550],[7,640]];
+const hw = y => (y - 40) * 250 / 660;
+let n = 0;
+ROWS.forEach(([cnt, y]) => {
+  const w = hw(y) - 6, sag = 26;
+  const x0 = 300 - w, x1 = 300 + w;
+  el("path", { d: `M${x0},${y} Q300,${y + sag * 2} ${x1},${y}`, fill: "none", stroke: "#e8c36a", "stroke-width": 2.5 }, svg);
+  for (let k = 0; k <= 8; k++) {
+    const t = k / 8;
+    const bx = (1-t)*(1-t)*x0 + 2*(1-t)*t*300 + t*t*x1;
+    const by = (1-t)*(1-t)*y + 2*(1-t)*t*(y + sag*2) + t*t*y;
+    el("circle", { class: "bulb", cx: bx, cy: by + 4, r: 3, fill: ["#fff176","#ff8a80","#80d8ff"][k % 3], style: `animation-delay:${k*0.25}s` }, svg);
+  }
+  for (let i = 0; i < cnt; i++) {
+    n++;
+    const t = (i + 1) / (cnt + 1);
+    const bx = (1-t)*(1-t)*x0 + 2*(1-t)*t*300 + t*t*x1;
+    const by = (1-t)*(1-t)*y + 2*(1-t)*t*(y + sag*2) + t*t*y + 16;
+    const day = n;
+    const g = el("g", { class: "ball", "data-day": day, tabindex: 0, role: "button", "aria-label": "День " + day }, svg);
+    el("line", { x1: bx, y1: by - 17, x2: bx, y2: by - 10, stroke: "#e8c36a", "stroke-width": 2 }, g);
+    el("circle", { class: "glow", cx: bx, cy: by, r: 22, fill: "#fff6a0", opacity: 0 }, g);
+    el("circle", { class: "body", cx: bx, cy: by, r: 17, fill: `url(#g${day % 4})`, stroke: "rgba(0,0,0,.25)" }, g);
+    el("rect", { x: bx - 4, y: by - 22, width: 8, height: 6, rx: 1, fill: "#d7b25a" }, g);
+    const num = el("text", { class: "num", x: bx, y: by }, g); num.textContent = day;
+    const ck = el("text", { class: "check", x: bx, y: by }, g); ck.textContent = "✓";
+    g.addEventListener("click", () => openDay(day));
+    g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDay(day); } });
+  }
+});
+
+const $ = id => document.getElementById(id);
+
+function refresh() {
+  document.querySelectorAll(".ball").forEach(b => {
+    const d = +b.dataset.day;
+    b.classList.toggle("locked", d > TODAY);
+    b.classList.toggle("today", d === TODAY);
+    b.classList.toggle("opened", state.opened.includes(d));
+  });
+  $("sOpen").textContent = state.opened.length;
+  $("sDone").textContent = state.done.length;
+  $("sQuiz").textContent = Object.values(state.quiz).filter(v => v.ok).length;
+}
+
+let cur = 0;
+function toast(t) { const e = $("toast"); e.textContent = t; e.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = "none", 2200); }
+
+function renderQuiz(d) {
+  const [q, right, ...wrong] = QUIZ[d - 1];
+  const box = $("qOpts"), res = $("qRes");
+  $("qText").textContent = "Мини-квиз: " + q;
+  box.textContent = ""; res.textContent = "";
+  const opts = [right, ...wrong].map(t => ({ t, ok: t === right }));
+  opts.sort(() => Math.random() - .5);
+  opts.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.type = "button"; b.textContent = o.t;
+    b.onclick = () => answer(d, o);
+    box.appendChild(b);
+  });
+  if (state.quiz[d]) showResult(d);
+}
+function answer(d, o) {
+  if (state.quiz[d]) return;
+  state.quiz[d] = { ok: o.ok, pick: o.t };
+  save();
+  showResult(d);
+  refresh();
+}
+function showResult(d) {
+  const { ok, pick } = state.quiz[d];
+  const right = QUIZ[d - 1][1];
+  [...$("qOpts").children].forEach(b => {
+    b.disabled = true;
+    if (b.textContent === right) b.classList.add("right");
+    else if (b.textContent === pick) b.classList.add("wrong");
+  });
+  $("qRes").textContent = ok ? "Верно!" : "Не совсем, правильный ответ подсвечен зелёным.";
+}
+
+function openDay(d) {
+  if (d > TODAY) {
+    toast(TODAY === 0 ? "Календарь откроется 1 декабря" : `Этот шар откроется ${d} декабря`);
+    return;
+  }
+  cur = d;
+  const [title, fact, task] = DAYS[d - 1];
+  $("cDay").textContent = d + " декабря";
+  $("cTitle").textContent = title;
+  $("cFact").textContent = fact;
+  $("cTask").textContent = task;
+  $("cDone").checked = state.done.includes(d);
+  $("prev").disabled = d <= 1;
+  $("next").disabled = d >= TODAY;
+  renderQuiz(d);
+  if (!state.opened.includes(d)) { state.opened.push(d); save(); }
+  refresh();
+  $("overlay").classList.add("show");
+}
+const closeCard = () => $("overlay").classList.remove("show");
+$("close").onclick = closeCard;
+$("overlay").addEventListener("click", e => { if (e.target.id === "overlay") closeCard(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
+$("prev").onclick = () => openDay(cur - 1);
+$("next").onclick = () => openDay(cur + 1);
+$("cDone").onchange = e => {
+  const i = state.done.indexOf(cur);
+  if (e.target.checked && i < 0) state.done.push(cur);
+  if (!e.target.checked && i >= 0) state.done.splice(i, 1);
+  save(); refresh();
+  if (e.target.checked) toast("Добрых дел: " + state.done.length);
+};
+
+const cv = $("snow"), ctx = cv.getContext("2d");
+let flakes = [];
+function resize() { cv.width = innerWidth; cv.height = innerHeight; }
+addEventListener("resize", resize); resize();
+for (let i = 0; i < 90; i++) flakes.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: 1 + Math.random() * 3, v: .4 + Math.random() * 1.1, s: Math.random() * 6 });
+(function tick() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = "rgba(255,255,255,.85)";
+  flakes.forEach(f => {
+    f.y += f.v; f.s += .02; f.x += Math.sin(f.s) * .5;
+    if (f.y > cv.height) { f.y = -5; f.x = Math.random() * cv.width; }
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.fill();
+  });
+  requestAnimationFrame(tick);
+})();
+
+// Музыка синтезируется в браузере: оригинальная мелодия, внешних записей нет.
+const musicBtn = $("music");
+let actx = null, master = null, timer = null, step = 0, nextT = 0;
+const HZ = m => 440 * Math.pow(2, (m - 69) / 12);
+const MELODY = [76,0,79,0,81,79,76,0, 74,0,77,0,79,77,74,0, 72,0,76,0,79,76,72,0, 74,76,74,72,71,0,0,0];
+const BASS   = [48,0,0,0,55,0,0,0, 53,0,0,0,55,0,0,0, 48,0,0,0,52,0,0,0, 55,0,0,0,43,0,0,0];
+function tone(freq, t, dur, vol) {
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + .01);
+  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + dur + .05);
+}
+function schedule() {
+  while (nextT < actx.currentTime + .3) {
+    const i = step % MELODY.length;
+    if (MELODY[i]) { tone(HZ(MELODY[i]), nextT, 1.4, .16); tone(HZ(MELODY[i] + 12), nextT, .5, .04); }
+    if (BASS[i]) tone(HZ(BASS[i]), nextT, 2.2, .12);
+    nextT += .4; step++;
+  }
+}
+function setMusic(on) {
+  if (on) {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (!master) { master = actx.createGain(); master.gain.value = .6; master.connect(actx.destination); }
+    actx.resume(); nextT = actx.currentTime + .1;
+    timer = setInterval(schedule, 100);
+  } else {
+    clearInterval(timer); timer = null;
+    if (actx) actx.suspend();
+  }
+  musicBtn.textContent = "Музыка: " + (on ? "вкл" : "выкл");
+  musicBtn.setAttribute("aria-pressed", on);
+}
+musicBtn.onclick = () => setMusic(!timer);
+
+refresh();
+</script>
+</body>
+</html>
