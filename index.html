@@ -2,85 +2,82 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2a1306">
 <title>Адвент-календарь · Красный Крест</title>
+<link rel="preload" as="image" href="assets/tree.webp">
 <style>
-  :root { --red:#c8102e; --cream:#fff6e5; }
-  * { box-sizing:border-box; }
-  html,body { margin:0; height:100%; }
+  :root { --red:#c8102e; --cream:#fff6e5; --ink:#3b2a1d; --tw:max(min(100vw, calc((100svh - 180px) / 1.2016)), min(100vw, 340px)); }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; }
   body {
     font-family: Georgia, "Times New Roman", serif;
-    color:#3b2a1d;
-    min-height:100vh;
+    color:var(--ink);
+    min-height:100vh; min-height:100svh;
     display:flex; flex-direction:column; align-items:center;
-    background:
-      linear-gradient(to bottom, transparent 0, transparent 82%, #8a5a34 82%, #6b4223 100%),
-      repeating-linear-gradient(90deg, #f3dfb8 0 38px, #efd8ae 38px 40px),
-      #f3dfb8;
-    background-attachment: fixed;
+    background:#1b0d05 url("assets/bg-m.webp") center/cover no-repeat fixed;
     overflow-x:hidden;
   }
-  body::before {
-    content:""; position:fixed; inset:0 0 18% 0; z-index:0; pointer-events:none;
+  @media (orientation:landscape) { body { background-image:url("assets/bg-d.webp"); } }
+  body::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
     background:
-      radial-gradient(circle at 20px 20px, rgba(200,16,46,.08) 3px, transparent 4px) 0 0/40px 40px,
-      radial-gradient(circle at 0 0, rgba(0,0,0,.04), transparent 60%);
-  }
-  body::after {
-    content:""; position:fixed; left:0; right:0; bottom:0; height:18%; z-index:0; pointer-events:none;
+      linear-gradient(to bottom, rgba(18,7,0,.62) 0, rgba(18,7,0,.25) 26%, transparent 42%),
+      radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.45) 100%); }
+  canvas#snow { position:fixed; inset:0; width:100%; height:100%; z-index:5; pointer-events:none; }
+
+  header { position:relative; z-index:2; text-align:center; padding:calc(14px + env(safe-area-inset-top)) 12px 0; color:#fff3dc; text-shadow:0 2px 10px rgba(0,0,0,.7); }
+  h1 { margin:0; font-size:clamp(22px,4.2vw,40px); letter-spacing:.5px; }
+  .sub { margin:4px 0 0; font-size:clamp(13px,2vw,17px); opacity:.92; }
+  .stats { display:inline-block; margin-top:10px; padding:5px 14px; font-size:14px; background:rgba(20,8,0,.55); border:1px solid rgba(255,220,160,.35); border-radius:20px; text-shadow:none; backdrop-filter:blur(3px); }
+  .stats b { color:#ffcf6b; }
+
+  main { position:relative; z-index:3; flex:1; width:100%; display:flex; align-items:center; justify-content:center; padding:6px 0 10px; }
+  #stage { position:relative; width:var(--tw); aspect-ratio:759 / 912; }
+  #stage .shadow { position:absolute; left:12%; right:12%; bottom:-1.5%; height:7%; background:radial-gradient(ellipse at center, rgba(0,0,0,.65) 0, rgba(0,0,0,.35) 45%, transparent 72%); filter:blur(4px); }
+  #stage img { position:absolute; inset:0; width:100%; height:100%; display:block; filter:brightness(.9) saturate(.95) drop-shadow(0 10px 16px rgba(0,0,0,.45)); user-select:none; -webkit-user-drag:none; }
+  #stage svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+  .wire { fill:none; stroke:#14210f; stroke-width:2.2; stroke-linecap:round; }
+  .bulb { animation:twinkle 2.4s ease-in-out infinite; filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 7px currentColor); }
+  @keyframes twinkle { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+  .ball {
+    position:absolute; width:9.0%; aspect-ratio:1; margin:calc(9.0% / -2) 0 0 calc(9.0% / -2);
+    border:0; padding:0; border-radius:50%; cursor:pointer; color:#fff;
+    font:bold calc(var(--tw) * .036) Georgia, serif; text-shadow:0 1px 2px rgba(0,0,0,.6);
+    display:flex; align-items:center; justify-content:center;
     background:
-      linear-gradient(#4a2c15 0 6px, transparent 6px),
-      repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 2px, transparent 2px 120px),
-      linear-gradient(#8a5a34, #5e3a1e);
+      radial-gradient(circle at 30% 24%, rgba(255,255,255,.95) 0 5%, rgba(255,255,255,.35) 11%, transparent 24%),
+      radial-gradient(circle at 72% 82%, rgba(255,255,255,.22) 0, transparent 30%),
+      radial-gradient(circle at 50% 55%, var(--c1) 0, var(--c2) 62%, var(--c3) 100%);
+    box-shadow: inset -.35em -.55em 1em rgba(0,0,0,.35), inset .15em .2em .5em rgba(255,255,255,.18), 0 .35em .7em rgba(0,0,0,.5);
+    transition:transform .18s, filter .2s;
   }
-  canvas#snow { position:fixed; inset:0; z-index:5; pointer-events:none; }
-
-  header { position:relative; z-index:2; text-align:center; padding:18px 12px 0; }
-  h1 { margin:0; font-size:clamp(22px,4vw,38px); color:var(--red); letter-spacing:.5px; }
-  .sub { margin:4px 0 0; font-size:clamp(13px,2vw,17px); opacity:.8; }
-  .stats { margin-top:8px; font-size:14px; }
-  .stats b { color:var(--red); }
-
-  .window { position:fixed; top:90px; left:4%; width:130px; height:170px; z-index:1;
-    background:linear-gradient(#1d2f52,#3b5a8c); border:8px solid #fff; border-radius:6px;
-    box-shadow:0 0 0 3px #d9c7a0, inset 0 0 20px rgba(255,255,255,.2); }
-  .window::before,.window::after { content:""; position:absolute; background:#fff; }
-  .window::before { left:50%; top:0; bottom:0; width:6px; transform:translateX(-50%); }
-  .window::after { top:50%; left:0; right:0; height:6px; transform:translateY(-50%); }
-  .rug { position:fixed; bottom:2%; left:50%; width:min(760px,90vw); height:60px; transform:translateX(-50%);
-    background:radial-gradient(ellipse at center, #a3342f 0 55%, #7d1f1c 56% 100%); border-radius:50%; z-index:1; opacity:.9; }
-  @media (max-width:900px){ .window{display:none;} }
-
-  main { position:relative; z-index:3; width:min(640px,100%); flex:1; padding:0 8px 40px; }
-  svg#tree { width:100%; height:auto; display:block; filter:drop-shadow(0 8px 10px rgba(0,0,0,.35)); }
-
-  .ball { cursor:pointer; transition:transform .15s; transform-box:fill-box; transform-origin:center; }
-  .ball:hover { transform:scale(1.15); }
-  .ball.locked { cursor:not-allowed; opacity:.45; filter:grayscale(.7); }
+  .ball::before { content:""; position:absolute; top:-9%; left:50%; width:26%; height:13%; transform:translateX(-50%); border-radius:2px 2px 1px 1px; background:linear-gradient(90deg,#8a6a20,#f6dd8a 45%,#8a6a20); box-shadow:0 1px 2px rgba(0,0,0,.5); }
+  .ball::after { content:""; position:absolute; top:-17%; left:50%; width:14%; height:10%; transform:translateX(-50%); border:2px solid #d9b85a; border-bottom:0; border-radius:50% 50% 0 0; }
+  .ball:hover, .ball:focus-visible { transform:scale(1.12); outline:none; z-index:2; }
+  .ball:focus-visible { box-shadow:0 0 0 3px #fff, 0 .35em .7em rgba(0,0,0,.5); }
+  .c0 { --c1:#f0475c; --c2:#b50f29; --c3:#5f0212; }
+  .c1 { --c1:#ffe08a; --c2:#d79b21; --c3:#7a4d05; }
+  .c2 { --c1:#f4f6f8; --c2:#b3bbc4; --c3:#5d6671; }
+  .c3 { --c1:#6ea6ff; --c2:#2559b8; --c3:#0e2760; }
+  .ball.locked { cursor:not-allowed; filter:grayscale(.85) brightness(.55); }
   .ball.locked:hover { transform:none; }
-  .ball.today circle.glow { animation:pulse 1.4s ease-in-out infinite; }
-  .ball .num { font:bold 15px Georgia,serif; fill:#fff; text-anchor:middle; dominant-baseline:central; pointer-events:none; paint-order:stroke; stroke:rgba(0,0,0,.35); stroke-width:2px; }
-  .ball.opened .num { opacity:0; }
-  .ball .check { display:none; font:bold 18px sans-serif; fill:#fff; text-anchor:middle; dominant-baseline:central; pointer-events:none; }
-  .ball.opened .check { display:block; }
-  .ball.opened circle.body { filter:brightness(.8); }
-  @keyframes pulse { 0%,100%{ opacity:.15; r:22; } 50%{ opacity:.7; r:28; } }
-  .bulb { animation:blink 2s infinite; }
-  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
-  .star { animation:blink 3s infinite; }
+  .ball.today { animation:glow 1.6s ease-in-out infinite; }
+  @keyframes glow { 0%,100%{ box-shadow: inset -.35em -.55em 1em rgba(0,0,0,.35), 0 .35em .7em rgba(0,0,0,.5), 0 0 0 rgba(255,225,130,0);} 50%{ box-shadow: inset -.35em -.55em 1em rgba(0,0,0,.35), 0 .35em .7em rgba(0,0,0,.5), 0 0 1.4em .5em rgba(255,225,130,.95);} }
+  .ball.opened { filter:brightness(.78) saturate(.85); }
 
-  .overlay { position:fixed; inset:0; background:rgba(30,15,5,.6); display:none; align-items:center; justify-content:center; z-index:20; padding:14px; }
+  .overlay { position:fixed; inset:0; background:rgba(20,8,0,.68); display:none; align-items:center; justify-content:center; z-index:20; padding:14px; backdrop-filter:blur(2px); }
   .overlay.show { display:flex; }
-  .card { background:var(--cream); width:min(520px,100%); max-height:92vh; overflow:auto; border-radius:16px; padding:26px 26px 20px;
-    border:4px solid var(--red); box-shadow:0 20px 50px rgba(0,0,0,.5); position:relative; animation:pop .25s ease-out; }
-  @keyframes pop { from{ transform:scale(.8); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  .card { background:var(--cream); width:min(520px,100%); max-height:92vh; max-height:92svh; overflow:auto; border-radius:16px; padding:26px 26px 20px;
+    border:4px solid var(--red); box-shadow:0 20px 50px rgba(0,0,0,.55); position:relative; animation:pop .25s ease-out; }
+  @keyframes pop { from{ transform:scale(.85); opacity:0; } to{ transform:scale(1); opacity:1; } }
   .card .day { display:inline-block; background:var(--red); color:#fff; border-radius:20px; padding:2px 14px; font-weight:bold; font-size:14px; }
   .card h2 { margin:10px 0 8px; font-size:22px; color:var(--red); }
   .card p { line-height:1.5; margin:8px 0; font-size:16px; }
   .quiz { margin-top:14px; padding:12px 14px; background:#fff; border:2px solid #cfe3d4; border-radius:10px; }
   .quiz .q { margin:0 0 8px; font-size:15px; }
   .quiz .opts { display:flex; flex-direction:column; gap:6px; }
-  .quiz .opt { text-align:left; background:#f1ead8; color:#3b2a1d; border:2px solid transparent; }
+  .quiz .opt { text-align:left; background:#f1ead8; color:var(--ink); border:2px solid transparent; }
   .quiz .opt:hover:not(:disabled) { border-color:var(--red); }
   .quiz .opt.right { background:#2e9e5b; color:#fff; opacity:1; }
   .quiz .opt.wrong { background:#c8102e; color:#fff; opacity:1; }
@@ -91,19 +88,18 @@
   .task label { display:flex; gap:8px; align-items:center; margin-top:8px; cursor:pointer; font-size:15px; }
   .nav { display:flex; justify-content:space-between; margin-top:16px; gap:8px; }
   button { font:inherit; background:var(--red); color:#fff; border:0; border-radius:8px; padding:8px 14px; cursor:pointer; }
-  button.ghost { background:#e8d7b5; color:#3b2a1d; }
-  button:disabled { opacity:.35; cursor:default; }
-  .close { position:absolute; top:8px; right:12px; background:none; color:#3b2a1d; font-size:26px; padding:0 6px; }
-  #music { position:fixed; top:10px; right:10px; z-index:25; background:rgba(255,246,229,.95); color:#3b2a1d; border:2px solid var(--red); }
-  footer { position:relative; z-index:3; font-size:12px; opacity:.7; padding:0 12px 10px; text-align:center; color:#fff; }
-  #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#3b2a1d; color:#fff; padding:10px 18px; border-radius:20px; z-index:30; display:none; font-size:14px; }
+  .card button.ghost { background:#e8d7b5; color:var(--ink); }
+  .card button:disabled { opacity:.35; cursor:default; }
+  .close { position:absolute; top:8px; right:12px; background:none !important; color:var(--ink) !important; font-size:26px; padding:0 6px; }
+  #music { position:fixed; top:calc(10px + env(safe-area-inset-top)); right:10px; z-index:25; background:rgba(255,246,229,.95); color:var(--ink); border:2px solid var(--red); font-size:14px; padding:6px 12px; }
+  footer { position:relative; z-index:3; font-size:12px; padding:0 12px calc(10px + env(safe-area-inset-bottom)); text-align:center; color:#fff3dc; opacity:.75; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+  #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#3b2a1d; color:#fff; padding:10px 18px; border-radius:20px; z-index:30; display:none; font-size:14px; max-width:90vw; text-align:center; }
+  @media (prefers-reduced-motion:reduce) { .bulb, .ball.today { animation:none; } .card { animation:none; } }
 </style>
 </head>
 <body>
 <canvas id="snow"></canvas>
 <button id="music" type="button" aria-pressed="false">Музыка: выкл</button>
-<div class="window"></div>
-<div class="rug"></div>
 
 <header>
   <h1>Новогодний адвент-календарь</h1>
@@ -112,7 +108,11 @@
 </header>
 
 <main>
-  <svg id="tree" viewBox="0 0 600 760" aria-label="Ёлка с шарами"></svg>
+  <div id="stage" aria-label="Ёлка с шарами">
+    <div class="shadow"></div>
+    <img src="assets/tree.webp" alt="" width="759" height="912" decoding="async">
+    <svg id="garland" viewBox="0 0 759 912" aria-hidden="true"></svg>
+  </div>
 </main>
 
 <footer>Страница сделана коллегами для коллег и не является официальным ресурсом организации.</footer>
@@ -211,10 +211,16 @@ const QUIZ = [
  ["Как переводится девиз МККК Inter arma caritas?","Среди войны — милосердие","Мир всем людям","Помощь без границ"]
 ];
 
+const BALLS = [[49.28, 25.5], [38.71, 35.68], [57.73, 35.68], [32.65, 46.35], [44.09, 47.6], [55.52, 47.6], [66.95, 46.35], [31.46, 57.43], [44.74, 58.78], [58.02, 58.78], [71.3, 57.43], [28.43, 68.5], [40.5, 69.72], [52.57, 70.13], [64.64, 69.72], [76.7, 68.5], [17.24, 79.5], [28.6, 80.51], [39.96, 81.11], [51.32, 81.31], [62.68, 81.11], [74.04, 80.51], [85.4, 79.5], [13.81, 90.64], [24.64, 91.55], [35.47, 92.15], [46.3, 92.46], [57.13, 92.46], [67.96, 92.15], [78.79, 91.55], [89.62, 90.64]];
+const GARLAND = ["M311,173 Q374,217 437,173", "M254,275 Q366,319 478,275", "M208,376 Q378,420 548,376", "M199,478 Q390,522 581,478", "M176,580 Q399,624 622,580", "M91,682 Q390,726 688,682", "M65,784 Q392,828 720,784"];
+const BULBS = [[318.0, 180.6], [332.0, 188.2], [346.0, 193.7], [360.0, 196.9], [374.0, 198.0], [388.0, 196.9], [402.0, 193.7], [416.0, 188.2], [430.0, 180.6], [266.4, 282.6], [291.3, 290.2], [316.2, 295.7], [341.1, 298.9], [366.0, 300.0], [390.9, 298.9], [415.8, 295.7], [440.7, 290.2], [465.6, 282.6], [226.9, 383.6], [264.7, 391.2], [302.4, 396.7], [340.2, 399.9], [378.0, 401.0], [415.8, 399.9], [453.6, 396.7], [491.3, 391.2], [529.1, 383.6], [220.2, 485.6], [262.7, 493.2], [305.1, 498.7], [347.6, 501.9], [390.0, 503.0], [432.4, 501.9], [474.9, 498.7], [517.3, 493.2], [559.8, 485.6], [200.8, 587.6], [250.3, 595.2], [299.9, 600.7], [349.4, 603.9], [399.0, 605.0], [448.6, 603.9], [498.1, 600.7], [547.7, 595.2], [597.2, 587.6], [124.2, 689.6], [190.5, 697.2], [256.8, 702.7], [323.2, 705.9], [389.5, 707.0], [455.8, 705.9], [522.2, 702.7], [588.5, 697.2], [654.8, 689.6], [101.4, 791.6], [174.2, 799.2], [246.9, 804.7], [319.7, 807.9], [392.5, 809.0], [465.3, 807.9], [538.1, 804.7], [610.8, 799.2], [683.6, 791.6]];
+const TRACKS = ["assets/music1.mp3", "assets/music2.mp3"];
+
 const KEY = "recross_advent_" + YEAR;
 let state = JSON.parse(localStorage.getItem(KEY) || '{"opened":[],"done":[],"quiz":{}}');
 state.quiz = state.quiz || {};
 const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+const $ = id => document.getElementById(id);
 
 function currentDay() {
   const p = new URLSearchParams(location.search);
@@ -228,62 +234,37 @@ function currentDay() {
 const TODAY = currentDay();
 
 const NS = "http://www.w3.org/2000/svg";
-const el = (n, a = {}, parent) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; };
-const svg = document.getElementById("tree");
-
-const defs = el("defs", {}, svg);
-const COLORS = [["#e5384f","#8b0f22"],["#f5f5f5","#b9b9b9"],["#2e9e5b","#145a30"],["#f0b93a","#a37113"]];
-COLORS.forEach((c, i) => {
-  const g = el("radialGradient", { id: "g" + i, cx: ".35", cy: ".3", r: ".8" }, defs);
-  el("stop", { offset: "0", "stop-color": c[0] }, g);
-  el("stop", { offset: "1", "stop-color": c[1] }, g);
+const svg = $("garland"), stage = $("stage");
+GARLAND.forEach(d => {
+  const p = document.createElementNS(NS, "path");
+  p.setAttribute("d", d); p.setAttribute("class", "wire"); svg.appendChild(p);
+});
+const LIGHT = ["#fff3a8", "#ff8f8f", "#8fd8ff", "#b6ffa8"];
+BULBS.forEach(([x, y], i) => {
+  const c = document.createElementNS(NS, "circle");
+  c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 3.6);
+  c.setAttribute("fill", LIGHT[i % 4]); c.setAttribute("class", "bulb");
+  c.style.color = LIGHT[i % 4]; c.style.animationDelay = (i % 7) * .33 + "s";
+  svg.appendChild(c);
 });
 
-el("rect", { x: 280, y: 690, width: 40, height: 50, fill: "#6b4223" }, svg);
-el("polygon", { points: "300,40 50,700 550,700", fill: "#1a6b3a" }, svg);
-el("polygon", { points: "300,40 120,400 480,400", fill: "#208048", opacity: .55 }, svg);
-el("polygon", { class: "star", fill: "#ffd54a", stroke: "#e0a800", "stroke-width": 2,
-  points: "300,5 308,26 330,26 312,39 319,60 300,47 281,60 288,39 270,26 292,26" }, svg);
-
-const ROWS = [[3,190],[4,280],[5,370],[6,460],[6,550],[7,640]];
-const hw = y => (y - 40) * 250 / 660;
-let n = 0;
-ROWS.forEach(([cnt, y]) => {
-  const w = hw(y) - 6, sag = 26;
-  const x0 = 300 - w, x1 = 300 + w;
-  el("path", { d: `M${x0},${y} Q300,${y + sag * 2} ${x1},${y}`, fill: "none", stroke: "#e8c36a", "stroke-width": 2.5 }, svg);
-  for (let k = 0; k <= 8; k++) {
-    const t = k / 8;
-    const bx = (1-t)*(1-t)*x0 + 2*(1-t)*t*300 + t*t*x1;
-    const by = (1-t)*(1-t)*y + 2*(1-t)*t*(y + sag*2) + t*t*y;
-    el("circle", { class: "bulb", cx: bx, cy: by + 4, r: 3, fill: ["#fff176","#ff8a80","#80d8ff"][k % 3], style: `animation-delay:${k*0.25}s` }, svg);
-  }
-  for (let i = 0; i < cnt; i++) {
-    n++;
-    const t = (i + 1) / (cnt + 1);
-    const bx = (1-t)*(1-t)*x0 + 2*(1-t)*t*300 + t*t*x1;
-    const by = (1-t)*(1-t)*y + 2*(1-t)*t*(y + sag*2) + t*t*y + 16;
-    const day = n;
-    const g = el("g", { class: "ball", "data-day": day, tabindex: 0, role: "button", "aria-label": "День " + day }, svg);
-    el("line", { x1: bx, y1: by - 17, x2: bx, y2: by - 10, stroke: "#e8c36a", "stroke-width": 2 }, g);
-    el("circle", { class: "glow", cx: bx, cy: by, r: 22, fill: "#fff6a0", opacity: 0 }, g);
-    el("circle", { class: "body", cx: bx, cy: by, r: 17, fill: `url(#g${day % 4})`, stroke: "rgba(0,0,0,.25)" }, g);
-    el("rect", { x: bx - 4, y: by - 22, width: 8, height: 6, rx: 1, fill: "#d7b25a" }, g);
-    const num = el("text", { class: "num", x: bx, y: by }, g); num.textContent = day;
-    const ck = el("text", { class: "check", x: bx, y: by }, g); ck.textContent = "✓";
-    g.addEventListener("click", () => openDay(day));
-    g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDay(day); } });
-  }
+BALLS.forEach(([x, y], i) => {
+  const day = i + 1;
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "ball c" + (day % 4); b.dataset.day = day;
+  b.style.left = x + "%"; b.style.top = y + "%";
+  b.setAttribute("aria-label", "День " + day);
+  b.onclick = () => openDay(day);
+  stage.appendChild(b);
 });
-
-const $ = id => document.getElementById(id);
 
 function refresh() {
   document.querySelectorAll(".ball").forEach(b => {
-    const d = +b.dataset.day;
+    const d = +b.dataset.day, opened = state.opened.includes(d);
     b.classList.toggle("locked", d > TODAY);
-    b.classList.toggle("today", d === TODAY);
-    b.classList.toggle("opened", state.opened.includes(d));
+    b.classList.toggle("today", d === TODAY && !opened);
+    b.classList.toggle("opened", opened);
+    b.textContent = opened ? "✓" : d;
   });
   $("sOpen").textContent = state.opened.length;
   $("sDone").textContent = state.done.length;
@@ -291,7 +272,7 @@ function refresh() {
 }
 
 let cur = 0;
-function toast(t) { const e = $("toast"); e.textContent = t; e.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = "none", 2200); }
+function toast(t) { const e = $("toast"); e.textContent = t; e.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = "none", 2600); }
 
 function renderQuiz(d) {
   const [q, right, ...wrong] = QUIZ[d - 1];
@@ -311,9 +292,7 @@ function renderQuiz(d) {
 function answer(d, o) {
   if (state.quiz[d]) return;
   state.quiz[d] = { ok: o.ok, pick: o.t };
-  save();
-  showResult(d);
-  refresh();
+  save(); showResult(d); refresh();
 }
 function showResult(d) {
   const { ok, pick } = state.quiz[d];
@@ -359,59 +338,79 @@ $("cDone").onchange = e => {
   if (e.target.checked) toast("Добрых дел: " + state.done.length);
 };
 
+// Снег: мягкие спрайты, учёт плотности пикселей экрана
 const cv = $("snow"), ctx = cv.getContext("2d");
-let flakes = [];
-function resize() { cv.width = innerWidth; cv.height = innerHeight; }
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let dpr = 1, vw = 0, vh = 0;
+function resize() {
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  vw = innerWidth; vh = innerHeight;
+  cv.width = vw * dpr; cv.height = vh * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
 addEventListener("resize", resize); resize();
-for (let i = 0; i < 90; i++) flakes.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: 1 + Math.random() * 3, v: .4 + Math.random() * 1.1, s: Math.random() * 6 });
-(function tick() {
-  ctx.clearRect(0, 0, cv.width, cv.height);
-  ctx.fillStyle = "rgba(255,255,255,.85)";
-  flakes.forEach(f => {
-    f.y += f.v; f.s += .02; f.x += Math.sin(f.s) * .5;
-    if (f.y > cv.height) { f.y = -5; f.x = Math.random() * cv.width; }
-    ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.fill();
-  });
+const sprite = document.createElement("canvas"); sprite.width = sprite.height = 32;
+{
+  const s = sprite.getContext("2d"), g = s.createRadialGradient(16, 16, 0, 16, 16, 16);
+  g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(.35, "rgba(255,255,255,.7)"); g.addColorStop(1, "rgba(255,255,255,0)");
+  s.fillStyle = g; s.fillRect(0, 0, 32, 32);
+}
+const COUNT = vw < 600 ? 45 : 80;
+const flakes = Array.from({ length: COUNT }, () => {
+  const z = Math.random();
+  return { x: Math.random() * vw, y: Math.random() * vh, r: 2 + z * 6, v: .3 + z * 1.1, s: Math.random() * 6, a: .35 + z * .55 };
+});
+function tick() {
+  ctx.clearRect(0, 0, vw, vh);
+  for (const f of flakes) {
+    f.y += f.v; f.s += .015; f.x += Math.sin(f.s) * .4;
+    if (f.y > vh + 10) { f.y = -10; f.x = Math.random() * vw; }
+    ctx.globalAlpha = f.a;
+    ctx.drawImage(sprite, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
+  }
   requestAnimationFrame(tick);
-})();
+}
+if (!reduceMotion) tick();
 
-// Музыка синтезируется в браузере: оригинальная мелодия, внешних записей нет.
+// Музыка: два трека по кругу, плавное включение и выключение
 const musicBtn = $("music");
-let actx = null, master = null, timer = null, step = 0, nextT = 0;
-const HZ = m => 440 * Math.pow(2, (m - 69) / 12);
-const MELODY = [76,0,79,0,81,79,76,0, 74,0,77,0,79,77,74,0, 72,0,76,0,79,76,72,0, 74,76,74,72,71,0,0,0];
-const BASS   = [48,0,0,0,55,0,0,0, 53,0,0,0,55,0,0,0, 48,0,0,0,52,0,0,0, 55,0,0,0,43,0,0,0];
-function tone(freq, t, dur, vol) {
-  const o = actx.createOscillator(), g = actx.createGain();
-  o.type = "sine"; o.frequency.value = freq;
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(vol, t + .01);
-  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-  o.connect(g); g.connect(master);
-  o.start(t); o.stop(t + dur + .05);
+let audio = null, trackIdx = 0, musicOn = false, fadeTimer = null;
+function fadeTo(v, ms, done) {
+  clearInterval(fadeTimer);
+  const from = audio.volume, steps = Math.max(1, ms / 50);
+  let i = 0;
+  fadeTimer = setInterval(() => {
+    i++; audio.volume = Math.min(1, Math.max(0, from + (v - from) * i / steps));
+    if (i >= steps) { clearInterval(fadeTimer); if (done) done(); }
+  }, 50);
 }
-function schedule() {
-  while (nextT < actx.currentTime + .3) {
-    const i = step % MELODY.length;
-    if (MELODY[i]) { tone(HZ(MELODY[i]), nextT, 1.4, .16); tone(HZ(MELODY[i] + 12), nextT, .5, .04); }
-    if (BASS[i]) tone(HZ(BASS[i]), nextT, 2.2, .12);
-    nextT += .4; step++;
+function playTrack() {
+  audio.src = TRACKS[trackIdx]; audio.volume = 0;
+  return audio.play().then(() => fadeTo(.5, 1500));
+}
+function setLabel() {
+  musicBtn.textContent = "Музыка: " + (musicOn ? "вкл" : "выкл");
+  musicBtn.setAttribute("aria-pressed", musicOn);
+}
+musicBtn.onclick = () => {
+  if (!audio) {
+    audio = new Audio(); audio.preload = "none";
+    audio.addEventListener("ended", () => { trackIdx = (trackIdx + 1) % TRACKS.length; if (musicOn) playTrack().catch(() => {}); });
   }
-}
-function setMusic(on) {
-  if (on) {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    if (!master) { master = actx.createGain(); master.gain.value = .6; master.connect(actx.destination); }
-    actx.resume(); nextT = actx.currentTime + .1;
-    timer = setInterval(schedule, 100);
+  if (!musicOn) {
+    musicOn = true; setLabel();
+    (audio.src ? audio.play().then(() => fadeTo(.5, 1500)) : playTrack()).catch(() => {
+      musicOn = false; setLabel(); toast("Не удалось включить музыку");
+    });
   } else {
-    clearInterval(timer); timer = null;
-    if (actx) actx.suspend();
+    musicOn = false; setLabel();
+    fadeTo(0, 500, () => audio.pause());
   }
-  musicBtn.textContent = "Музыка: " + (on ? "вкл" : "выкл");
-  musicBtn.setAttribute("aria-pressed", on);
-}
-musicBtn.onclick = () => setMusic(!timer);
+};
+document.addEventListener("visibilitychange", () => {
+  if (!audio || !musicOn) return;
+  if (document.hidden) audio.pause(); else audio.play().catch(() => {});
+});
 
 refresh();
 </script>
