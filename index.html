@@ -6,8 +6,10 @@
 <meta name="theme-color" content="#2a1306">
 <title>Адвент-календарь · Красный Крест</title>
 <link rel="preload" as="image" href="assets/tree.webp">
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/lobster.woff2" crossorigin>
 <style>
-  :root { --red:#c8102e; --cream:#fff6e5; --ink:#3b2a1d; --tw:max(min(100vw, calc((100svh - 180px) / 1.2016)), min(100vw, 340px)); }
+  @font-face { font-family:"Lobster"; src:url("assets/fonts/lobster.woff2") format("woff2"); font-weight:400; font-style:normal; font-display:swap; }
+  :root { --red:#c8102e; --cream:#fff6e5; --ink:#3b2a1d; --tw:max(min(100vw, calc((100svh - 240px) / 1.2016)), min(100vw, 340px)); }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body { margin:0; }
   body {
@@ -26,7 +28,15 @@
   canvas#snow { position:fixed; inset:0; width:100%; height:100%; z-index:5; pointer-events:none; }
 
   header { position:relative; z-index:2; text-align:center; padding:calc(14px + env(safe-area-inset-top)) 12px 0; color:#fff3dc; text-shadow:0 2px 10px rgba(0,0,0,.7); }
-  h1 { margin:0; font-size:clamp(22px,4.2vw,40px); letter-spacing:.5px; }
+  .kicker { display:flex; align-items:center; justify-content:center; gap:10px; }
+  .kicker .line { width:clamp(28px,12vw,70px); height:1px; background:linear-gradient(90deg, transparent, #f1cf86); }
+  .kicker .line:last-child { transform:scaleX(-1); }
+  .kicker .rc { width:22px; height:22px; flex:none; filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); }
+  h1 { margin:2px 0 0; font-weight:400; line-height:1.02; }
+  h1 .a { display:block; font:italic 400 clamp(14px,3.6vw,20px) Georgia, serif; letter-spacing:.28em; text-transform:uppercase; color:#f6dba0; padding-left:.28em; }
+  h1 .b { display:block; font-family:"Lobster", "Marck Script", cursive; font-size:clamp(34px,10.5vw,60px); color:#fff; letter-spacing:.01em;
+    text-shadow: 0 2px 0 #c8102e, 0 3px 0 #8f0b21, 0 6px 16px rgba(0,0,0,.65); }
+  .sub { letter-spacing:.02em; }
   .sub { margin:4px 0 0; font-size:clamp(13px,2vw,17px); opacity:.92; }
   .stats { display:inline-block; margin-top:10px; padding:5px 14px; font-size:14px; background:rgba(20,8,0,.55); border:1px solid rgba(255,220,160,.35); border-radius:20px; text-shadow:none; backdrop-filter:blur(3px); }
   .stats b { color:#ffcf6b; }
@@ -42,29 +52,26 @@
 
   .ball {
     position:absolute; width:9.0%; aspect-ratio:1; margin:calc(9.0% / -2) 0 0 calc(9.0% / -2);
-    border:0; padding:0; border-radius:50%; cursor:pointer; color:#fff;
-    font:bold calc(var(--tw) * .036) Georgia, serif; text-shadow:0 1px 2px rgba(0,0,0,.6);
-    display:flex; align-items:center; justify-content:center;
-    background:
-      radial-gradient(circle at 30% 24%, rgba(255,255,255,.95) 0 5%, rgba(255,255,255,.35) 11%, transparent 24%),
-      radial-gradient(circle at 72% 82%, rgba(255,255,255,.22) 0, transparent 30%),
-      radial-gradient(circle at 50% 55%, var(--c1) 0, var(--c2) 62%, var(--c3) 100%);
-    box-shadow: inset -.35em -.55em 1em rgba(0,0,0,.35), inset .15em .2em .5em rgba(255,255,255,.18), 0 .35em .7em rgba(0,0,0,.5);
+    border:0; padding:0; border-radius:50%; cursor:pointer; color:#fff; display:block;
+    background: radial-gradient(circle at 50% 52%, #ffffff 0, #f4efe8 52%, #c9c0b3 100%);
+    box-shadow: inset -.3em -.45em .8em rgba(0,0,0,.26), inset .12em .18em .4em rgba(255,255,255,.7), 0 .35em .7em rgba(0,0,0,.5);
     transition:transform .18s, filter .2s;
   }
+  .ball .cross { position:absolute; inset:8%; background:linear-gradient(150deg,#ea2b46 0,#c8102e 55%,#8d0b20 100%);
+    clip-path:polygon(31% 0,69% 0,69% 31%,100% 31%,100% 69%,69% 69%,69% 100%,31% 100%,31% 69%,0 69%,0 31%,31% 31%); }
+  .ball .n { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:2;
+    font:700 calc(var(--tw) * .03) system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing:-.02em; text-shadow:0 1px 1px rgba(0,0,0,.55); pointer-events:none; }
+  .ball .gloss { position:absolute; inset:0; border-radius:50%; z-index:3; pointer-events:none;
+    background: radial-gradient(circle at 30% 23%, rgba(255,255,255,.95) 0 4%, rgba(255,255,255,.35) 10%, transparent 22%), radial-gradient(circle at 72% 84%, rgba(255,255,255,.18) 0, transparent 28%); }
   .ball::before { content:""; position:absolute; top:-9%; left:50%; width:26%; height:13%; transform:translateX(-50%); border-radius:2px 2px 1px 1px; background:linear-gradient(90deg,#8a6a20,#f6dd8a 45%,#8a6a20); box-shadow:0 1px 2px rgba(0,0,0,.5); }
   .ball::after { content:""; position:absolute; top:-17%; left:50%; width:14%; height:10%; transform:translateX(-50%); border:2px solid #d9b85a; border-bottom:0; border-radius:50% 50% 0 0; }
   .ball:hover, .ball:focus-visible { transform:scale(1.12); outline:none; z-index:2; }
   .ball:focus-visible { box-shadow:0 0 0 3px #fff, 0 .35em .7em rgba(0,0,0,.5); }
-  .c0 { --c1:#f0475c; --c2:#b50f29; --c3:#5f0212; }
-  .c1 { --c1:#ffe08a; --c2:#d79b21; --c3:#7a4d05; }
-  .c2 { --c1:#f4f6f8; --c2:#b3bbc4; --c3:#5d6671; }
-  .c3 { --c1:#6ea6ff; --c2:#2559b8; --c3:#0e2760; }
-  .ball.locked { cursor:not-allowed; filter:grayscale(.85) brightness(.55); }
+  .ball.locked { cursor:not-allowed; filter:grayscale(.9) brightness(.55); }
   .ball.locked:hover { transform:none; }
   .ball.today { animation:glow 1.6s ease-in-out infinite; }
-  @keyframes glow { 0%,100%{ box-shadow: inset -.35em -.55em 1em rgba(0,0,0,.35), 0 .35em .7em rgba(0,0,0,.5), 0 0 0 rgba(255,225,130,0);} 50%{ box-shadow: inset -.35em -.55em 1em rgba(0,0,0,.35), 0 .35em .7em rgba(0,0,0,.5), 0 0 1.4em .5em rgba(255,225,130,.95);} }
-  .ball.opened { filter:brightness(.78) saturate(.85); }
+  @keyframes glow { 0%,100%{ box-shadow: inset -.3em -.45em .8em rgba(0,0,0,.26), 0 .35em .7em rgba(0,0,0,.5), 0 0 0 rgba(255,225,130,0);} 50%{ box-shadow: inset -.3em -.45em .8em rgba(0,0,0,.26), 0 .35em .7em rgba(0,0,0,.5), 0 0 1.4em .5em rgba(255,225,130,.95);} }
+  .ball.opened { filter:brightness(.8) saturate(.85); }
 
   .overlay { position:fixed; inset:0; background:rgba(20,8,0,.68); display:none; align-items:center; justify-content:center; z-index:20; padding:14px; backdrop-filter:blur(2px); }
   .overlay.show { display:flex; }
@@ -91,19 +98,49 @@
   .card button.ghost { background:#e8d7b5; color:var(--ink); }
   .card button:disabled { opacity:.35; cursor:default; }
   .close { position:absolute; top:8px; right:12px; background:none !important; color:var(--ink) !important; font-size:26px; padding:0 6px; }
-  #music { position:fixed; top:calc(10px + env(safe-area-inset-top)); right:10px; z-index:25; background:rgba(255,246,229,.95); color:var(--ink); border:2px solid var(--red); font-size:14px; padding:6px 12px; }
-  footer { position:relative; z-index:3; font-size:12px; padding:0 12px calc(10px + env(safe-area-inset-bottom)); text-align:center; color:#fff3dc; opacity:.75; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+  #music { position:fixed; right:calc(12px + env(safe-area-inset-right)); bottom:calc(16px + env(safe-area-inset-bottom)); z-index:25; width:46px; height:46px; padding:0; border:0; border-radius:50%; display:grid; place-items:center;
+    background:radial-gradient(circle at 32% 26%, #ff6b7e 0, #c8102e 48%, #6d0818 100%);
+    box-shadow: inset -3px -5px 9px rgba(0,0,0,.35), inset 2px 3px 5px rgba(255,255,255,.28), 0 4px 10px rgba(0,0,0,.55); }
+  #music::before { content:""; position:absolute; top:-6px; left:50%; width:14px; height:7px; transform:translateX(-50%); border-radius:2px 2px 1px 1px; background:linear-gradient(90deg,#8a6a20,#f6dd8a 45%,#8a6a20); }
+  #music::after { content:""; position:absolute; top:-12px; left:50%; width:8px; height:7px; transform:translateX(-50%); border:2px solid #d9b85a; border-bottom:0; border-radius:50% 50% 0 0; }
+  #music svg { width:22px; height:22px; display:block; overflow:visible; }
+  #music .shape { stroke:#fff; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; fill:none; }
+  #music .dot { fill:#fff; stroke:none; }
+  #music .slash-bg { stroke:rgba(70,0,12,.75); stroke-width:4.2; stroke-linecap:round; }
+  #music .slash { stroke:#fff; stroke-width:2; stroke-linecap:round; }
+  #music[aria-pressed="true"] .slash, #music[aria-pressed="true"] .slash-bg { display:none; }
+  #music[aria-pressed="false"] .shape, #music[aria-pressed="false"] .dot { opacity:.85; }
+  #music[aria-pressed="true"] { animation:ring 2.4s ease-out infinite; }
+  #music:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+  @keyframes ring {
+    0%   { box-shadow: inset -3px -5px 9px rgba(0,0,0,.35), inset 2px 3px 5px rgba(255,255,255,.28), 0 4px 10px rgba(0,0,0,.55), 0 0 0 0 rgba(255,215,120,.75); }
+    100% { box-shadow: inset -3px -5px 9px rgba(0,0,0,.35), inset 2px 3px 5px rgba(255,255,255,.28), 0 4px 10px rgba(0,0,0,.55), 0 0 0 16px rgba(255,215,120,0); }
+  }
+  footer { position:relative; z-index:3; font-size:12px; padding:0 calc(68px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) 12px; text-align:center; color:#fff3dc; opacity:.75; text-shadow:0 1px 4px rgba(0,0,0,.8); }
   #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#3b2a1d; color:#fff; padding:10px 18px; border-radius:20px; z-index:30; display:none; font-size:14px; max-width:90vw; text-align:center; }
-  @media (prefers-reduced-motion:reduce) { .bulb, .ball.today { animation:none; } .card { animation:none; } }
+  @media (prefers-reduced-motion:reduce) { .bulb, .ball.today, #music { animation:none !important; } .card { animation:none; } }
 </style>
 </head>
 <body>
 <canvas id="snow"></canvas>
-<button id="music" type="button" aria-pressed="false">Музыка: выкл</button>
+<button id="music" type="button" aria-pressed="false" aria-label="Включить музыку" title="Включить музыку">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path class="shape" d="M9 17.5V6.5l9.5-2v11"/>
+    <circle class="dot" cx="6.6" cy="17.6" r="2.7"/>
+    <circle class="dot" cx="16.1" cy="15.6" r="2.7"/>
+    <path class="slash-bg" d="M4.5 3.5l15 17"/>
+    <path class="slash" d="M4.5 3.5l15 17"/>
+  </svg>
+</button>
 
 <header>
-  <h1>Новогодний адвент-календарь</h1>
-  <p class="sub">31 шар — 31 факт о Красном Кресте, мини-квиз и одно доброе дело</p>
+  <div class="kicker" aria-hidden="true">
+    <span class="line"></span>
+    <svg class="rc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="#fff"/><path fill="#c8102e" d="M9.2 4.5h5.6v4.7h4.7v5.6h-4.7v4.7H9.2v-4.7H4.5V9.2h4.7z"/></svg>
+    <span class="line"></span>
+  </div>
+  <h1><span class="a">Новогодний</span><span class="b">Адвент-календарь</span></h1>
+  <p class="sub">31 день · факты о Красном Кресте · мини-квиз и доброе дело</p>
   <div class="stats">Открыто: <b id="sOpen">0</b> из 31 · Верных ответов: <b id="sQuiz">0</b> · Добрых дел: <b id="sDone">0</b></div>
 </header>
 
@@ -251,7 +288,8 @@ BULBS.forEach(([x, y], i) => {
 BALLS.forEach(([x, y], i) => {
   const day = i + 1;
   const b = document.createElement("button");
-  b.type = "button"; b.className = "ball c" + (day % 4); b.dataset.day = day;
+  b.type = "button"; b.className = "ball"; b.dataset.day = day;
+  b.innerHTML = '<span class="cross"></span><span class="n"></span><span class="gloss"></span>';
   b.style.left = x + "%"; b.style.top = y + "%";
   b.setAttribute("aria-label", "День " + day);
   b.onclick = () => openDay(day);
@@ -264,7 +302,7 @@ function refresh() {
     b.classList.toggle("locked", d > TODAY);
     b.classList.toggle("today", d === TODAY && !opened);
     b.classList.toggle("opened", opened);
-    b.textContent = opened ? "✓" : d;
+    b.querySelector(".n").textContent = opened ? "✓" : d;
   });
   $("sOpen").textContent = state.opened.length;
   $("sDone").textContent = state.done.length;
@@ -389,8 +427,10 @@ function playTrack() {
   return audio.play().then(() => fadeTo(.5, 1500));
 }
 function setLabel() {
-  musicBtn.textContent = "Музыка: " + (musicOn ? "вкл" : "выкл");
+  const t = musicOn ? "Выключить музыку" : "Включить музыку";
   musicBtn.setAttribute("aria-pressed", musicOn);
+  musicBtn.setAttribute("aria-label", t);
+  musicBtn.title = t;
 }
 musicBtn.onclick = () => {
   if (!audio) {
